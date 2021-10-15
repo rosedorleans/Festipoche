@@ -20,9 +20,10 @@ class Event
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\ManyToOne(targetEntity=Stage::class, inversedBy="events")
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $place;
+    private $stage;
 
     /**
      * @ORM\Column(type="datetime")
@@ -45,6 +46,13 @@ class Event
      */
     private $artists;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $name;
+
+
+
     public function __construct()
     {
         $this->artists = new ArrayCollection();
@@ -55,14 +63,14 @@ class Event
         return $this->id;
     }
 
-    public function getPlace(): ?string
+    public function getStage(): ?Stage
     {
-        return $this->place;
+        return $this->stage;
     }
 
-    public function setPlace(string $place): self
+    public function setStage(?Stage $stage): self
     {
-        $this->place = $place;
+        $this->stage = $stage;
 
         return $this;
     }
@@ -132,4 +140,18 @@ class Event
 
         return $this;
     }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+
 }
