@@ -6,6 +6,7 @@ use App\Repository\StageRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=StageRepository::class)
@@ -16,16 +17,25 @@ class Stage
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups("festival:read")
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups("festival:read")
      */
     private $name;
 
     /**
+     * @ORM\ManyToOne(targetEntity=Festival::class, inversedBy="stages")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $festival;
+
+    /**
      * @ORM\OneToMany(targetEntity=Event::class, mappedBy="stage")
+     * @Groups("festival:read")
      */
     private $events;
 
@@ -33,6 +43,7 @@ class Stage
     {
         $this->events = new ArrayCollection();
     }
+
 
     public function getId(): ?int
     {
@@ -47,6 +58,18 @@ class Stage
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getFestival(): ?Festival
+    {
+        return $this->festival;
+    }
+
+    public function setFestival(?Festival $festival): self
+    {
+        $this->festival = $festival;
 
         return $this;
     }

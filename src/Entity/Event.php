@@ -6,6 +6,7 @@ use App\Repository\EventRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=EventRepository::class)
@@ -16,8 +17,21 @@ class Event
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups("festival:read")
      */
     private $id;
+
+    /**
+     * @ORM\Column(type="datetime")
+     * @Groups("festival:read")
+     */
+    private $start_datetime;
+
+    /**
+     * @ORM\Column(type="datetime")
+     * @Groups("festival:read")
+     */
+    private $end_datetime;
 
     /**
      * @ORM\ManyToOne(targetEntity=Stage::class, inversedBy="events")
@@ -26,32 +40,10 @@ class Event
     private $stage;
 
     /**
-     * @ORM\Column(type="datetime")
-     */
-    private $start_datetime;
-
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $end_datetime;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=Festival::class, inversedBy="events")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $festival;
-
-    /**
      * @ORM\OneToMany(targetEntity=Artist::class, mappedBy="event")
+     * @Groups("festival:read")
      */
     private $artists;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $name;
-
-
 
     public function __construct()
     {
@@ -61,18 +53,6 @@ class Event
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getStage(): ?Stage
-    {
-        return $this->stage;
-    }
-
-    public function setStage(?Stage $stage): self
-    {
-        $this->stage = $stage;
-
-        return $this;
     }
 
     public function getStartDatetime(): ?\DateTimeInterface
@@ -99,14 +79,14 @@ class Event
         return $this;
     }
 
-    public function getFestival(): ?Festival
+    public function getStage(): ?Stage
     {
-        return $this->festival;
+        return $this->stage;
     }
 
-    public function setFestival(?Festival $festival): self
+    public function setStage(?Stage $stage): self
     {
-        $this->festival = $festival;
+        $this->stage = $stage;
 
         return $this;
     }
@@ -140,18 +120,4 @@ class Event
 
         return $this;
     }
-
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-
 }

@@ -7,9 +7,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use ApiPlatform\Core\Annotation\ApiResource;
 
 /**
  * @ORM\Entity(repositoryClass=FestivalRepository::class)
+ * @ApiResource
  */
 class Festival
 {
@@ -40,13 +42,14 @@ class Festival
     private $end_date;
 
     /**
-     * @ORM\OneToMany(targetEntity=Event::class, mappedBy="festival")
+     * @ORM\OneToMany(targetEntity=Stage::class, mappedBy="festival")
+     * @Groups("festival:read")
      */
-    private $events;
+    private $stages;
 
     public function __construct()
     {
-        $this->events = new ArrayCollection();
+        $this->stages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -90,30 +93,32 @@ class Festival
         return $this;
     }
 
+
+
     /**
-     * @return Collection|Event[]
+     * @return Collection|Stage[]
      */
-    public function getEvents(): Collection
+    public function getStages(): Collection
     {
-        return $this->events;
+        return $this->stages;
     }
 
-    public function addEvent(Event $event): self
+    public function addStage(Stage $stage): self
     {
-        if (!$this->events->contains($event)) {
-            $this->events[] = $event;
-            $event->setFestival($this);
+        if (!$this->stages->contains($stage)) {
+            $this->stages[] = $stage;
+            $stage->setFestival($this);
         }
 
         return $this;
     }
 
-    public function removeEvent(Event $event): self
+    public function removeStage(Stage $stage): self
     {
-        if ($this->events->removeElement($event)) {
+        if ($this->stages->removeElement($stage)) {
             // set the owning side to null (unless already changed)
-            if ($event->getFestival() === $this) {
-                $event->setFestival(null);
+            if ($stage->getFestival() === $this) {
+                $stage->setFestival(null);
             }
         }
 
