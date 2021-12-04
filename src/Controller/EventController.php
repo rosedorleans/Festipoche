@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\Event;
 use App\Form\EventType;
 use App\Repository\EventRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,9 +22,18 @@ class EventController extends AbstractController
      */
     public function index(EventRepository $eventRepository): Response
     {
-        return $this->render('event/index.html.twig', [
-            'events' => $eventRepository->findAll(),
-        ]);
+        $allEvents = $eventRepository->findAll();
+        $arrayCollection = array();
+
+        foreach($allEvents as $event) {
+            $arrayCollection[] = array(
+                'start_datetime' => $event->getStartDatetime(),
+                'end_datetime' => $event->getEndDatetime(),
+                'stage' => $event->getStage(),
+                'artists' => $event->getArtists()
+            );
+        }
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -39,23 +50,24 @@ class EventController extends AbstractController
             $entityManager->persist($event);
             $entityManager->flush();
 
-            return $this->redirectToRoute('event_index', [], Response::HTTP_SEE_OTHER);
-        }
+            return new JsonResponse("Evenement créé", 200);        }
 
-        return $this->render('event/new.html.twig', [
-            'event' => $event,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Ajouter un evenement", 200);
     }
 
     /**
      * @Route("/{id}", name="event_show", methods={"GET"})
      */
-    public function show(Event $event): Response
+    public function show(EntityManagerInterface $entityManager, Request $request): Response
     {
-        return $this->render('event/show.html.twig', [
-            'event' => $event,
-        ]);
+        $event = $entityManager->getRepository('App:Artist')->findOneBy(['id' => $request->get('id')]);
+        $arrayCollection[] = array(
+            'start_datetime' => $event->getStartDatetime(),
+            'end_datetime' => $event->getEndDatetime(),
+            'stage' => $event->getStage(),
+            'artists' => $event->getArtists()
+        );
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -69,13 +81,9 @@ class EventController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->getDoctrine()->getManager()->flush();
 
-            return $this->redirectToRoute('event_index', [], Response::HTTP_SEE_OTHER);
-        }
+            return new JsonResponse("Artiste modifié", 200);        }
 
-        return $this->render('event/edit.html.twig', [
-            'event' => $event,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Modifier un artiste", 200);
     }
 
     /**
@@ -87,8 +95,9 @@ class EventController extends AbstractController
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->remove($event);
             $entityManager->flush();
+
+            return new JsonResponse("Evenement supprimé", 200);
         }
 
-        return $this->redirectToRoute('event_index', [], Response::HTTP_SEE_OTHER);
-    }
+        return new JsonResponse("Supprimer un evenement", 200);       }
 }

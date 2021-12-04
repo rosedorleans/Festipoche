@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\Festival;
 use App\Form\FestivalType;
 use App\Repository\FestivalRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,11 +20,21 @@ class FestivalController extends AbstractController
     /**
      * @Route("/", name="festival_index", methods={"GET"})
      */
-    public function index(FestivalRepository $festivalRepository): Response
+    public function index(FestivalRepository $festivalRepository)
     {
-        return $this->render('festival/index.html.twig', [
-            'festivals' => $festivalRepository->findAll(),
-        ]);
+        $allFestivals = $festivalRepository->findAll();
+        $arrayCollection = array();
+
+        foreach($allFestivals as $festival) {
+            $arrayCollection[] = array(
+                'id' => $festival->getId(),
+                'name' => $festival->getName(),
+                'startDate' => $festival->getStartDate(),
+                'endDate' => $festival->getEndDate()
+            );
+        }
+
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -39,23 +51,26 @@ class FestivalController extends AbstractController
             $entityManager->persist($festival);
             $entityManager->flush();
 
-            return $this->redirectToRoute('festival_index', [], Response::HTTP_SEE_OTHER);
+            return new JsonResponse("Festival créé", 200);
         }
 
-        return $this->render('festival/new.html.twig', [
-            'festival' => $festival,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Ajouter un festival", 200);
     }
 
     /**
      * @Route("/{id}", name="festival_show", methods={"GET"})
      */
-    public function show(Festival $festival): Response
+    public function show(EntityManagerInterface $entityManager, Request $request)
     {
-        return $this->render('festival/show.html.twig', [
-            'festival' => $festival,
-        ]);
+        $festival = $entityManager->getRepository('App:Festival')->findOneBy(['id' => $request->get('id')]);
+        $arrayCollection[] = array(
+            'id' => $festival->getId(),
+            'name' => $festival->getName(),
+            'startDate' => $festival->getStartDate(),
+            'endDate' => $festival->getEndDate()
+        );
+
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -69,17 +84,14 @@ class FestivalController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->getDoctrine()->getManager()->flush();
 
-            return $this->redirectToRoute('festival_index', [], Response::HTTP_SEE_OTHER);
+            return new JsonResponse("Festival modifié", 200);
         }
 
-        return $this->render('festival/edit.html.twig', [
-            'festival' => $festival,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Modifier un festival", 200);
     }
 
     /**
-     * @Route("/{id}", name="festival_delete", methods={"POST"})
+     * @Route("/{id}/delete", name="festival_delete", methods={"POST"})
      */
     public function delete(Request $request, Festival $festival): Response
     {
@@ -87,8 +99,10 @@ class FestivalController extends AbstractController
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->remove($festival);
             $entityManager->flush();
+
+            return new JsonResponse("Festival supprimé", 200);
         }
 
-        return $this->redirectToRoute('festival_index', [], Response::HTTP_SEE_OTHER);
+        return new JsonResponse("Supprimer un festival", 200);
     }
 }

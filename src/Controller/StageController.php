@@ -5,7 +5,10 @@ namespace App\Controller;
 use App\Entity\Stage;
 use App\Form\StageType;
 use App\Repository\StageRepository;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,9 +23,19 @@ class StageController extends AbstractController
      */
     public function index(StageRepository $stageRepository): Response
     {
-        return $this->render('stage/index.html.twig', [
-            'stages' => $stageRepository->findAll(),
-        ]);
+        $allStages = $stageRepository->findAll();
+        $arrayCollection = array();
+
+        foreach($allStages as $stage) {
+            $arrayCollection[] = array(
+                'id' => $stage->getId(),
+                'name' => $stage->getName(),
+                'festival' => $stage->getFestival(),
+                'events' => $stage->getEvents()
+            );
+        }
+
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -39,23 +52,25 @@ class StageController extends AbstractController
             $entityManager->persist($stage);
             $entityManager->flush();
 
-            return $this->redirectToRoute('stage_index', [], Response::HTTP_SEE_OTHER);
-        }
+            return new JsonResponse("Scène créée", 200);        }
 
-        return $this->render('stage/new.html.twig', [
-            'stage' => $stage,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Ajouter une scène", 200);
     }
 
     /**
      * @Route("/{id}", name="stage_show", methods={"GET"})
      */
-    public function show(Stage $stage): Response
+    public function show(EntityManagerInterface $entityManager, Request $request): Response
     {
-        return $this->render('stage/show.html.twig', [
-            'stage' => $stage,
-        ]);
+        $stage = $entityManager->getRepository('App:Stage')->findOneBy(['id' => $request->get('id')]);
+        $arrayCollection[] = array(
+            'id' => $stage->getId(),
+            'name' => $stage->getName(),
+            'festival' => $stage->getFestival(),
+            'events' => $stage->getEvents()
+        );
+
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -69,13 +84,10 @@ class StageController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->getDoctrine()->getManager()->flush();
 
-            return $this->redirectToRoute('stage_index', [], Response::HTTP_SEE_OTHER);
-        }
+            return new JsonResponse("Scène modifiée", 200);        }
 
-        return $this->render('stage/edit.html.twig', [
-            'stage' => $stage,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Modifier une scène", 200);
+
     }
 
     /**
@@ -87,8 +99,9 @@ class StageController extends AbstractController
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->remove($stage);
             $entityManager->flush();
+
+            return new JsonResponse("Scène supprimée", 200);
         }
 
-        return $this->redirectToRoute('stage_index', [], Response::HTTP_SEE_OTHER);
-    }
+        return new JsonResponse("Supprimer une scène", 200);        }
 }

@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\Artist;
 use App\Form\ArtistType;
 use App\Repository\ArtistRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,9 +22,17 @@ class ArtistController extends AbstractController
      */
     public function index(ArtistRepository $artistRepository): Response
     {
-        return $this->render('artist/index.html.twig', [
-            'artists' => $artistRepository->findAll(),
-        ]);
+        $allArtists = $artistRepository->findAll();
+        $arrayCollection = array();
+
+        foreach($allArtists as $artist) {
+            $arrayCollection[] = array(
+                'id' => $artist->getId(),
+                'name' => $artist->getName(),
+                'event' => $artist->getEvent()
+            );
+        }
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -39,23 +49,24 @@ class ArtistController extends AbstractController
             $entityManager->persist($artist);
             $entityManager->flush();
 
-            return $this->redirectToRoute('artist_index', [], Response::HTTP_SEE_OTHER);
+            return new JsonResponse("Artiste créé", 200);
         }
 
-        return $this->render('artist/new.html.twig', [
-            'artist' => $artist,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Ajouter un artiste", 200);
     }
 
     /**
      * @Route("/{id}", name="artist_show", methods={"GET"})
      */
-    public function show(Artist $artist): Response
+    public function show(EntityManagerInterface $entityManager, Request $request): Response
     {
-        return $this->render('artist/show.html.twig', [
-            'artist' => $artist,
-        ]);
+        $artist = $entityManager->getRepository('App:Artist')->findOneBy(['id' => $request->get('id')]);
+        $arrayCollection[] = array(
+            'id' => $artist->getId(),
+            'name' => $artist->getName(),
+            'event' => $artist->getEvent()
+        );
+        return new JsonResponse($arrayCollection);
     }
 
     /**
@@ -69,17 +80,13 @@ class ArtistController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->getDoctrine()->getManager()->flush();
 
-            return $this->redirectToRoute('artist_index', [], Response::HTTP_SEE_OTHER);
+            return new JsonResponse("Artiste modifié", 200);
         }
-
-        return $this->render('artist/edit.html.twig', [
-            'artist' => $artist,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse("Modifier un artiste", 200);
     }
 
     /**
-     * @Route("/{id}", name="artist_delete", methods={"POST"})
+     * @Route("/{id}/delete", name="artist_delete", methods={"POST"})
      */
     public function delete(Request $request, Artist $artist): Response
     {
@@ -87,8 +94,10 @@ class ArtistController extends AbstractController
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->remove($artist);
             $entityManager->flush();
+
+            return new JsonResponse("Artiste supprimé", 200);
         }
 
-        return $this->redirectToRoute('artist_index', [], Response::HTTP_SEE_OTHER);
+        return new JsonResponse("Supprimer un artiste", 200);
     }
 }
